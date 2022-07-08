@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "xml2js": "^0.4.23"
+  },
+  "dependencies": {
+    "glob": "^8.0.3",
+    "unzipper": "^0.10.11",
+    "xmlbuilder2": "^3.0.2"
+  }
+}
