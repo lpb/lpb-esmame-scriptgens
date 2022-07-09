@@ -1,8 +1,8 @@
 const fs = require('fs');
 const xml2js = require('xml2js');
 
-const xmlSource = 'xml/Mame.xml';
-const metaSource = 'xml/Metadata.xml';
+const xmlSource = 'I:/Launchbox/Metadata/Mame.xml';
+const metaSource = 'I:/Launchbox/Metadata/Metadata.xml';
 const MAMEdataPath = 'I:/MAMEdata/';
 
 const rootESPath = 'I:/emulationStation/.emulationstation/';
@@ -10,16 +10,19 @@ const romPath = MAMEdataPath + 'roms/';
 const snapsPath = MAMEdataPath + 'Extras/snap/snap/';
 const logosPath = MAMEdataPath + 'Extras/marquees/marquees/';
 const titlesPath = MAMEdataPath + 'Extras/flyers/flyers/';
+const manualsPath = MAMEdataPath + 'Extras/manuals/manuals/';
 
 const fileDir = '../.emulationstation/gamelists/mame/';
 const collectionDir = '../.emulationstation/collections/';
 
-const machineImagesPath = 'images/snaps/';
-const machineMarqueesPath = 'images/logos/';
-const machineThumbnailsPath = 'images/images/';
+const machineImagesPath = 'media/snaps/';
+const machineMarqueesPath = 'media/logos/';
+const machineManualsPath = 'media/manuals/';
+const machineThumbnailsPath = 'media/images/';
 
-const doImages = false; //disable image transfer
-const doLists = true; //disable collection list generation
+const doMedia = false; //disable media transfer
+const doLists = false; //disable collection list generation
+const makeJSON = true; //makes an optional json file of the main machine xml data
 
 let machinesArray = [];
 let metaData = [];
@@ -90,72 +93,13 @@ fs.readFile(metaSource, function (err, data) {
                             language: newLanguage,
                             players: newPlayers,
                             source: thisMachine.Source,
+                            manual: false
                         }
                         machinesArray.push(newEntry);
                     }
                 };
-                jsonData = JSON.stringify(machinesArray);
-        
-                //want an export of data as json format - because reasons?
-                // fs.writeFile('machines.json', jsonData, err => {
-                //     if (err) {
-                //         console.error(err)
-                //         return
-                //     }
-                // });
-        
-                console.log('Generating gamelist.xml');
-                //construct new 'all' gamelist.xml structure
-                let arcadeList = `<?xml version="1.0" encoding="UTF-8"?>
-                <gameList>`
-        
-                let gameCount = 0;
 
-                machinesArray.forEach(function (machine) {
-                    gameCount++;
-                    let thisMetaGameDataDesc = machine.name;
-                    let thisMetaGameDataDev = '';
-                    let thisMetaGameDevRating = '0';
-
-                    metaData.forEach(function (gameMetaD) {
-                        if ( gameMetaD.Name == machine.name) {
-                            thisMetaGameDataDesc = gameMetaD.Overview ? gameMetaD.Overview.replace(/\n\s*\n/g, '\n') : '';
-                            thisMetaGameDataDev = gameMetaD.Developer ? gameMetaD.Developer : '';
-                            thisMetaGameDevRating = gameMetaD.CommunityRatingCount ? gameMetaD.CommunityRatingCount : '0';
-                            return;
-                        }
-                    })
-
-                    arcadeList += `
-                        <game>
-                            <path>` + romPath + machine.filename + `.zip</path>
-                            <name>` + machine.name + `</name>
-                            <desc>` + thisMetaGameDataDesc + `</desc>
-                            <rating>` + thisMetaGameDevRating + `</rating>
-                            <publisher>` + machine.publisher + `</publisher>
-                            <developer>` + thisMetaGameDataDev + `</developer>
-                            <image>~/.emulationstation/` + machineImagesPath + machine.filename + `.png</image>
-                            <marquee>~/.emulationstation/` + machineMarqueesPath + machine.filename + `.png</marquee>
-                            <thumbnail>~/.emulationstation/` + machineThumbnailsPath + machine.filename + `.png</thumbnail>
-                            <releasedate>` + machine.year + `0101</releasedate>
-                            <genre>` + machine.genre + `</genre>
-                            <players>` + machine.players + `</players>
-                            <lang>` + machine.language + `</lang>
-                        </game>`;
-                });
-        
-                arcadeList += `
-                </gameList>`;
-        
-                console.log('Writing gamelist.xml with ' + gameCount + ' entries');
-                fs.writeFile(fileDir + 'gamelist.xml', arcadeList, err => {
-                    if (err) {
-                        console.error(err)
-                        return
-                    }
-                });
-        
-                if(doImages) {
+                if(doMedia) {
                     //do image finding and relocating for snaps
                     console.log('Begin snaps transfer');
                     machinesArray.forEach(function (machine) {
@@ -190,12 +134,93 @@ fs.readFile(metaSource, function (err, data) {
                         if (fs.existsSync(sourcePath)) {
                             fs.copyFile(sourcePath, destPath, function (err) {
                                 if (err) throw err
-                                // console.log('Successfully transferred lgoo'+machine.filename);
+                                // console.log('Successfully transferred logo '+machine.filename);
                             })
                         }
                     });
-                }
+
+                    //do file finding and relocating for manuals
+                    console.log('Begin manuals transfer');
+                    machinesArray.forEach(function (machine, index) {
+                        machinesArray[index].manual = false;
+                        let sourcePath = manualsPath + machine.filename + '.pdf';
+                        let destFile = machineManualsPath + machine.filename + '.pdf';
+                        let destPath = rootESPath + destFile;
+                        if (fs.existsSync(sourcePath)) {
+                            machinesArray[index].manual = destFile;  
+                            fs.copyFile(sourcePath, destPath, function (err) {
+                                if (err) throw err
+                                machinesArray[index].manual = destFile;                                
+                                // console.log('Successfully transferred manual ' + machine.filename + ' for machine ' + machinesArray[index].name);
+                            })
+                        }
+                    });
+                }                                
+
+                console.log('Generating gamelist.xml');
+                //construct new 'all' gamelist.xml structure
+                let arcadeList = `<?xml version="1.0" encoding="UTF-8"?>
+                <gameList>`
         
+                let gameCount = 0;
+
+                machinesArray.forEach(function (machine) {
+                    gameCount++;
+                    let thisMetaGameDataDesc = machine.name;
+                    let thisMetaGameDataDev = '';
+                    let thisMetaGameDevRating = '0';
+
+                    metaData.forEach(function (gameMetaD) {
+                        if ( gameMetaD.Name == machine.name) {
+                            thisMetaGameDataDesc = gameMetaD.Overview ? gameMetaD.Overview.replace(/\n\s*\n/g, '\n') : '';
+                            thisMetaGameDataDev = gameMetaD.Developer ? gameMetaD.Developer : '';
+                            thisMetaGameDevRating = gameMetaD.CommunityRatingCount ? gameMetaD.CommunityRatingCount : '0';
+                            return;
+                        }
+                    })
+
+                    arcadeList += `
+                        <game>
+                            <path>` + romPath + machine.filename + `.zip</path>
+                            <name>` + machine.name + `</name>
+                            <desc>` + thisMetaGameDataDesc + `</desc>
+                            <rating>` + thisMetaGameDevRating + `</rating>
+                            <publisher>` + machine.publisher + `</publisher>
+                            <developer>` + thisMetaGameDataDev + `</developer>
+                            <image>~/.emulationstation/` + machineImagesPath + machine.filename + `.png</image>
+                            <marquee>~/.emulationstation/` + machineMarqueesPath + machine.filename + `.png</marquee>
+                            <thumbnail>~/.emulationstation/` + machineThumbnailsPath + machine.filename + `.png</thumbnail>
+                            <manual>~/.emulationstation/` + machine.manual + `</manual>
+                            <releasedate>` + machine.year + `0101</releasedate>
+                            <genre>` + machine.genre + `</genre>
+                            <players>` + machine.players + `</players>
+                            <lang>` + machine.language + `</lang>
+                        </game>`;
+                });
+        
+                arcadeList += `
+                </gameList>`;
+        
+                console.log('Writing gamelist.xml with ' + gameCount + ' entries');
+                fs.writeFile(fileDir + 'gamelist.xml', arcadeList, err => {
+                    if (err) {
+                        console.error(err)
+                        return
+                    }
+                });
+        
+                // want an export of data as json format - because reasons?
+                if(makeJSON) {
+                    let jsonData = JSON.stringify(machinesArray);
+                    console.log('writing a json file with all the machines infos');
+                    fs.writeFile('machines.json', jsonData, err => {
+                        if (err) {
+                            console.error(err)
+                            return
+                        }
+                    });
+                }
+
                 if (doLists) {
                     //specifiy data to create collections for here
                     let wantedLists = [
