@@ -44,6 +44,8 @@ fs.readFile(xmlSource, function (err, data) {
                 value.$.sourcefile.indexOf('astropc.cpp') == -1 &&
                 value.$.sourcefile.indexOf('goldstar.cpp') == -1 &&
                 value.$.sourcefile.indexOf('meritm.cpp') == -1 &&
+                //exclude certain manufacturers
+                value.manufacturer &&
                 value.manufacturer.indexOf('<unknown>') == -1 &&
                 value.manufacturer.indexOf('Acorn') == -1 &&
                 value.manufacturer.indexOf('ACT') == -1 &&
@@ -108,7 +110,10 @@ fs.readFile(xmlSource, function (err, data) {
                 value.manufacturer.indexOf('NSI International') == -1 &&
                 value.manufacturer.indexOf('JAKKS Pacific') == -1 &&
                 value.manufacturer.indexOf('<generic>') == -1 &&
+                //has a driver status
+                value.driver &&
                 value.driver.$.status != 'preliminary' && 
+                //description contains any of the following (incase not already scooped by previous blob of logic)
                 value.description.indexOf(' in 1') == -1 &&
                 value.description.indexOf('Mahjong') == -1 &&
                 value.description.indexOf('Poker') == -1 &&

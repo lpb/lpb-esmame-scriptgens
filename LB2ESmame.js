@@ -20,8 +20,8 @@ const machineMarqueesPath = 'media/logos/';
 const machineManualsPath = 'media/manuals/';
 const machineThumbnailsPath = 'media/images/';
 
-const doMedia = false; //disable media transfer
-const doLists = false; //disable collection list generation
+const doMedia = true; //disable media transfer
+const doLists = true; //disable collection list generation
 const makeJSON = true; //makes an optional json file of the main machine xml data
 
 let machinesArray = [];
@@ -55,14 +55,28 @@ fs.readFile(metaSource, function (err, data) {
                 console.log('Now processing xml...');
                 for (const [key, value] of Object.entries(mameMachines)) {
                     let thisMachine = value;
-                    if (thisMachine.CloneOf || thisMachine.IsMechanical == 'true' || thisMachine.IsBootleg == 'true' || thisMachine.IsMature == 'true' ||
-                        thisMachine.IsQuiz == 'true' || thisMachine.IsFruit == 'true' || thisMachine.IsCasino == 'true' || thisMachine.IsPlayChoice == 'true' ||
-                        thisMachine.IsMahjong == 'true' || thisMachine.IsNonArcade == 'true' || thisMachine.Publisher == '<unknown>' || thisMachine.PlayMode == 'Device' ||
-                        thisMachine.Genre == 'System / Device' || thisMachine.Status == 'preliminary' || (thisMachine.Genre.indexOf('Compilation') != -1) || 
-                        (thisMachine.Genre.indexOf('Multiplay') != -1) || (thisMachine.Genre.indexOf('MultiGame') != -1) || (thisMachine.Genre.indexOf('Rhythm') != -1) ||
-                        thisMachine.Source == 'vsnes.cpp' || thisMachine.Source == 'megaplay.cpp' || (thisMachine.Genre.indexOf('Mahjong') != -1) || 
+                    //don't include anything that matches this chunk of conditionals...
+                    if (thisMachine.CloneOf || 
+                        thisMachine.IsMechanical == 'true' || 
+                        thisMachine.IsBootleg == 'true' || 
+                        thisMachine.IsMature == 'true' ||
+                        thisMachine.IsQuiz == 'true' || 
+                        thisMachine.IsFruit == 'true' || 
+                        thisMachine.IsCasino == 'true' || 
+                        thisMachine.IsPlayChoice == 'true' ||
+                        thisMachine.IsMahjong == 'true' || 
+                        thisMachine.IsNonArcade == 'true' || 
+                        thisMachine.Publisher == '<unknown>' || 
+                        thisMachine.PlayMode == 'Device' ||
+                        thisMachine.Genre == 'System / Device' || 
+                        thisMachine.Status == 'preliminary' || 
+                        (thisMachine.Genre.indexOf('Compilation') != -1) || 
+                        (thisMachine.Genre.indexOf('Multiplay') != -1) || 
+                        (thisMachine.Genre.indexOf('MultiGame') != -1) || 
+                        (thisMachine.Genre.indexOf('Rhythm') != -1) ||
+                        thisMachine.Source == 'vsnes.cpp' || thisMachine.Source == 'megaplay.cpp' || 
+                        (thisMachine.Genre.indexOf('Mahjong') != -1) || 
                         (thisMachine.Genre.indexOf('Shougi') != -1) ) {
-                            //don't include anything that matches this chunk of conditionals...
                     } else {
                         let newLanguage = 'en'; //some defaults just in case
                         let newPlayers = '1';
@@ -225,6 +239,8 @@ fs.readFile(metaSource, function (err, data) {
                     //specifiy data to create collections for here
                     let wantedLists = [
                         { name: 'atari',        publisher: 'Atari' },
+                        { name: 'acclaim',      publisher: 'Acclaim' },
+                        { name: 'atlus',        publisher: 'Atlus' },
                         { name: 'ballymidway',  publisher: 'Bally Midway',  notsource: ['astrocde'] },
                         { name: 'ballysente',   publisher: 'Bally/Sente' },
                         { name: 'capcom',       publisher: 'Capcom',        notsource: ['cps1','cps2','cps3','zn'] },
@@ -233,6 +249,10 @@ fs.readFile(metaSource, function (err, data) {
                         { name: 'capcom-cps3',  publisher: 'Capcom',        source: ['cps3'] },
                         { name: 'capcom-zn',    publisher: 'Capcom',        source: ['zn'] },
                         { name: 'century',      publisher: 'Century Electronics' },
+                        { name: 'cinematronics',publisher: 'Cinematronics' },
+                        { name: 'comad',        publisher: 'Comad' },
+                        { name: 'gaelco',       publisher: 'Gaelco' },
+                        { name: 'gottliev',     publisher: 'Gaelco' },
                         { name: 'dataeast',     publisher: 'Data East',     notsource: ['decocass'] },
                         { name: 'dataeast-deco',publisher: 'Data East',     source: ['decocass'] },
                         { name: 'exidy',        publisher: 'Exidy' },
@@ -242,11 +262,12 @@ fs.readFile(metaSource, function (err, data) {
                         { name: 'konami',       publisher: 'Konami',        notsource: ['konamigx','konamigq','konamigv','konamigs','djmain','firebeat'] },
                         { name: 'konami-g',     publisher: 'Konami',        source: ['konamigx','konamigq','konamigv','konamigs'] },
                         { name: 'midway',       publisher: 'Midway',        notpublisher: 'Bally Midway',       notsource: ['astrocde'] },
-                        { name: 'namco',        publisher: 'Namco',         notsource: ['namcos1', 'namcos11', 'namcos12', 'namcos2', 'namcos21', 'namcos21_c67', 'namcos22', 'namcona1', 'namconb1']},
-                        { name: 'namco-na',     publisher: 'Namco',         source: ['namcona1','namconb1'] },
-                        { name: 'namco-s12',    publisher: 'Namco',         source: ['namcos1', 'namcos2'] },
-                        { name: 'namco-s1112',  publisher: 'Namco',         source: ['namcos11', 'namcos12'] },
-                        { name: 'namco-s2122',  publisher: 'Namco',         source: ['namcos21', 'namcos21_c67', 'namcos22'] },
+                        { name: 'namco',        publisher: 'Namco',         notsource: ['namcos1', 'namcos11', 'namcos12', 'namcos2', 'namcos21', 'namcos21_c67', 'namcos22']},
+                        { name: 'namco-stype',  publisher: 'Namco',         source: ['namcos1', 'namcos2', 'namcos11', 'namcos12', 'namcos21', 'namcos21_c67', 'namcos22']},
+                        // { name: 'namco-na',     publisher: 'Namco',         source: ['namcona1','namconb1'] },
+                        // { name: 'namco-s12',    publisher: 'Namco',         source: ['namcos1', 'namcos2'] },
+                        // { name: 'namco-s1112',  publisher: 'Namco',         source: ['namcos11', 'namcos12'] },
+                        // { name: 'namco-s2122',  publisher: 'Namco',         source: ['namcos21', 'namcos21_c67', 'namcos22'] },
                         { name: 'nintendo',     publisher: 'Nintendo' },
                         { name: 'psikyo',       publisher: 'Psikyo' },
                         { name: 'sega',         publisher: 'Sega',          notsource: ['megaplay','meritm','model1','model2','model3','segaorun','segaxbd','segaybd','segas32','stv'] },
@@ -261,10 +282,11 @@ fs.readFile(metaSource, function (err, data) {
                         { name: 'snk',          publisher: 'SNK',           notsource: ['neogeo'] },
                         { name: 'snk-neogeo',   publisher: 'SNK',           source: ['neogeo'] },
                         { name: 'taito',        publisher: 'Taito',         notsource: ['taito_f1','taito_f2','taito_f3','taitogn','naomi','taito_z','taito_l'] },
-                        { name: 'taito-f',      publisher: 'Taito',         source: ['taito_f1','taito_f2','taito_f3'] },
-                        { name: 'taito-l',      publisher: 'Taito',         source: ['taito_l'] },
-                        { name: 'taito-z',      publisher: 'Taito',         source: ['taito_z'] },
-                        { name: 'taito-gnet',   publisher: 'Taito',         source: ['taitogn'] },
+                        { name: 'taito-typex',  publisher: 'Taito',         source: ['taito_f1','taito_f2','taito_f3','taito_z','taito_l'] },
+                        // { name: 'taito-f',      publisher: 'Taito',         source: ['taito_f1','taito_f2','taito_f3'] },
+                        // { name: 'taito-l',      publisher: 'Taito',         source: ['taito_l'] },
+                        // { name: 'taito-z',      publisher: 'Taito',         source: ['taito_z'] },
+                        // { name: 'taito-gnet',   publisher: 'Taito',         source: ['taitogn'] },
                         { name: 'tecmo',        publisher: 'Tecmo' },
                         { name: 'technos',      publisher: 'Technos' },
                         { name: 'tehkan',       publisher: 'Tehkan' },
