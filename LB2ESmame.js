@@ -21,6 +21,7 @@ const machineManualsPath = 'media/manuals/';
 const machineThumbnailsPath = 'media/images/';
 
 const doMedia = true; //disable media transfer
+const overWriteMedia = false; //overwrite existing media files
 const doLists = true; //disable collection list generation
 const makeJSON = true; //makes an optional json file of the main machine xml data
 
@@ -55,8 +56,9 @@ fs.readFile(metaSource, function (err, data) {
                 console.log('Now processing xml...');
                 for (const [key, value] of Object.entries(mameMachines)) {
                     let thisMachine = value;
-                    //don't include anything that matches this chunk of conditionals...
-                    if (thisMachine.CloneOf || 
+                    
+                    if (
+                        thisMachine.CloneOf || 
                         thisMachine.IsMechanical == 'true' || 
                         thisMachine.IsBootleg == 'true' || 
                         thisMachine.IsMature == 'true' ||
@@ -74,9 +76,13 @@ fs.readFile(metaSource, function (err, data) {
                         (thisMachine.Genre.indexOf('Multiplay') != -1) || 
                         (thisMachine.Genre.indexOf('MultiGame') != -1) || 
                         (thisMachine.Genre.indexOf('Rhythm') != -1) ||
-                        thisMachine.Source == 'vsnes.cpp' || thisMachine.Source == 'megaplay.cpp' || 
                         (thisMachine.Genre.indexOf('Mahjong') != -1) || 
-                        (thisMachine.Genre.indexOf('Shougi') != -1) ) {
+                        (thisMachine.Genre.indexOf('Hanafuda') != -1) ||
+                        (thisMachine.Genre.indexOf('Shougi') != -1) ||
+                        thisMachine.Source == 'vsnes.cpp' || 
+                        thisMachine.Source == 'megaplay.cpp'
+                        ) {
+                            //don't include anything that matches this above chunk of conditionals...
                     } else {
                         let newLanguage = 'en'; //some defaults just in case
                         let newPlayers = '1';
@@ -120,10 +126,14 @@ fs.readFile(metaSource, function (err, data) {
                         let sourcePath = snapsPath + machine.filename + '.png';
                         let destPath = rootESPath + machineImagesPath + machine.filename + '.png';
                         if (fs.existsSync(sourcePath)) {
-                            fs.copyFile(sourcePath, destPath, function (err) {
-                                if (err) throw err
-                                // console.log('Successfully transferred snap '+machine.filename);
-                            })
+                            if(overWriteMedia) {
+                                if (fs.existsSync(destPath)) {
+                                    fs.copyFile(sourcePath, destPath, function (err) {
+                                        if (err) throw err
+                                        // console.log('Successfully transferred snap '+machine.filename);
+                                    })
+                                }
+                            }
                         }
                     });
         
@@ -133,10 +143,16 @@ fs.readFile(metaSource, function (err, data) {
                         let sourcePath = titlesPath + machine.filename + '.png';
                         let destPath = rootESPath + machineThumbnailsPath + machine.filename + '.png';
                         if (fs.existsSync(sourcePath)) {
-                            fs.copyFile(sourcePath, destPath, function (err) {
-                                if (err) throw err
-                                // console.log('Successfully transferred title '+machine.filename);
-                            })
+                            if (fs.existsSync(sourcePath)) {
+                                if(overWriteMedia) {
+                                    if (fs.existsSync(destPath)) {
+                                        fs.copyFile(sourcePath, destPath, function (err) {
+                                            if (err) throw err
+                                            // console.log('Successfully transferred title '+machine.filename);
+                                        })
+                                    }
+                                }
+                            }
                         }
                     });
         
@@ -146,10 +162,16 @@ fs.readFile(metaSource, function (err, data) {
                         let sourcePath = logosPath + machine.filename + '.png';
                         let destPath = rootESPath + machineMarqueesPath + machine.filename + '.png';
                         if (fs.existsSync(sourcePath)) {
-                            fs.copyFile(sourcePath, destPath, function (err) {
-                                if (err) throw err
-                                // console.log('Successfully transferred logo '+machine.filename);
-                            })
+                            if (fs.existsSync(sourcePath)) {
+                                if(overWriteMedia) {
+                                    if (fs.existsSync(destPath)) {
+                                        fs.copyFile(sourcePath, destPath, function (err) {
+                                            if (err) throw err
+                                            // console.log('Successfully transferred logo '+machine.filename);
+                                        })
+                                    }
+                                }
+                            }
                         }
                     });
 
@@ -162,11 +184,19 @@ fs.readFile(metaSource, function (err, data) {
                         let destPath = rootESPath + destFile;
                         if (fs.existsSync(sourcePath)) {
                             machinesArray[index].manual = destFile;  
-                            fs.copyFile(sourcePath, destPath, function (err) {
-                                if (err) throw err
-                                machinesArray[index].manual = destFile;                                
-                                // console.log('Successfully transferred manual ' + machine.filename + ' for machine ' + machinesArray[index].name);
-                            })
+                            if (fs.existsSync(sourcePath)) {
+                                if(overWriteMedia) {
+                                    if (fs.existsSync(destPath)) {
+                                        fs.copyFile(sourcePath, destPath, function (err) {
+                                            if (err) throw err
+                                            machinesArray[index].manual = destFile; 
+                                            // console.log('Successfully transferred manual ' + machine.filename + ' for machine ' + machinesArray[index].name);
+                                        })
+                                    }
+                                } else {
+                                    machinesArray[index].manual = destFile; 
+                                }
+                            }
                         }
                     });
                 }                                
@@ -238,7 +268,7 @@ fs.readFile(metaSource, function (err, data) {
                 if (doLists) {
                     //specifiy data to create collections for here
                     let wantedLists = [
-                        { name: 'atari',        publisher: 'Atari' },
+                        { name: 'atari',        publisher: 'Atari',         notsource: ['jaguar'] },
                         { name: 'acclaim',      publisher: 'Acclaim' },
                         { name: 'atlus',        publisher: 'Atlus' },
                         { name: 'ballymidway',  publisher: 'Bally Midway',  notsource: ['astrocde'] },
@@ -250,12 +280,13 @@ fs.readFile(metaSource, function (err, data) {
                         { name: 'capcom-zn',    publisher: 'Capcom',        source: ['zn'] },
                         { name: 'century',      publisher: 'Century Electronics' },
                         { name: 'cinematronics',publisher: 'Cinematronics' },
-                        { name: 'comad',        publisher: 'Comad' },
+                        { name: 'comad',        publisher: 'Comad',         notsource: ['nmk16'] },
                         { name: 'gaelco',       publisher: 'Gaelco' },
-                        { name: 'gottliev',     publisher: 'Gaelco' },
+                        { name: 'gottlieb',     publisher: 'Gottlieb' },
                         { name: 'dataeast',     publisher: 'Data East',     notsource: ['decocass'] },
                         { name: 'dataeast-deco',publisher: 'Data East',     source: ['decocass'] },
                         { name: 'exidy',        publisher: 'Exidy' },
+                        { name: 'hudson',       publisher: 'Hudson' },
                         { name: 'irem',         publisher: 'Irem' },
                         { name: 'jaleco',       publisher: 'Jaleco'},
                         { name: 'kaneko',       publisher: 'Kaneko'},
@@ -281,8 +312,8 @@ fs.readFile(metaSource, function (err, data) {
                         { name: 'stern',        publisher: 'Stern Electronics' },
                         { name: 'snk',          publisher: 'SNK',           notsource: ['neogeo'] },
                         { name: 'snk-neogeo',   publisher: 'SNK',           source: ['neogeo'] },
-                        { name: 'taito',        publisher: 'Taito',         notsource: ['taito_f1','taito_f2','taito_f3','taitogn','naomi','taito_z','taito_l'] },
-                        { name: 'taito-typex',  publisher: 'Taito',         source: ['taito_f1','taito_f2','taito_f3','taito_z','taito_l'] },
+                        { name: 'taito',        publisher: 'Taito',         notsource: ['taito_b','taito_f1','taito_f2','taito_f3','taitogn','naomi','taito_z','taito_l','taitojc','zn','undrfire','slapshot','ddenlovr','superchs','groundfx','neogeo','nmk16'] },
+                        { name: 'taito-typex',  publisher: 'Taito',         source: ['taito_b','taito_f1','taito_f2','taito_f3','taito_z','taito_l','superchs','groundfx'] },
                         // { name: 'taito-f',      publisher: 'Taito',         source: ['taito_f1','taito_f2','taito_f3'] },
                         // { name: 'taito-l',      publisher: 'Taito',         source: ['taito_l'] },
                         // { name: 'taito-z',      publisher: 'Taito',         source: ['taito_z'] },
@@ -299,6 +330,9 @@ fs.readFile(metaSource, function (err, data) {
                         { name: 'astrocade',    source: ['astrocde'] },
                         { name: 'naomi',        source: ['naomi'] },
                         { name: 'neogeo',       source: ['neogeo'] },
+                        { name: 'nmk',          source: ['nmk16'] },
+                        { name: 'pgm',          source: ['pgm'] },
+                        { name: 'atari 3dfx',   source: ['seattle']}
                     ];
             
                     console.log('Generating collection lists...');
