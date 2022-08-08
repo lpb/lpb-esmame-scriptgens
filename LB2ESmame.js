@@ -20,6 +20,8 @@ const machineMarqueesPath = 'media/logos/';
 const machineManualsPath = 'media/manuals/';
 const machineThumbnailsPath = 'media/images/';
 
+const missingThumbnailImage = 'themes/es-theme-mameulationstation/_assets/icons/no_boxart.svg';
+
 const doMedia = true; //disable media transfer
 const overWriteMedia = false; //overwrite existing media files
 const doLists = true; //disable collection list generation
@@ -137,22 +139,24 @@ fs.readFile(metaSource, function (err, data) {
                         }
                     });
         
-                    //do image finding and relocating for titles
+                    //do image finding and relocating for thumb/boxart
                     console.log('Begin thumb transfer');
-                    machinesArray.forEach(function (machine) {
+                    machinesArray.forEach(function (machine,index) {
+                        machinesArray[index].thumbnail = false;
                         let sourcePath = titlesPath + machine.filename + '.png';
                         let destPath = rootESPath + machineThumbnailsPath + machine.filename + '.png';
                         if (fs.existsSync(sourcePath)) {
-                            if (fs.existsSync(sourcePath)) {
-                                if(overWriteMedia) {
-                                    if (fs.existsSync(destPath)) {
-                                        fs.copyFile(sourcePath, destPath, function (err) {
-                                            if (err) throw err
-                                            // console.log('Successfully transferred title '+machine.filename);
-                                        })
-                                    }
+                            machinesArray[index].thumbnail = machineThumbnailsPath + machine.filename + '.png';
+                            if(overWriteMedia) {
+                                if (fs.existsSync(destPath)) {
+                                    fs.copyFile(sourcePath, destPath, function (err) {
+                                        if (err) throw err
+                                        // console.log('Successfully transferred title '+machine.filename);
+                                    })
                                 }
-                            }
+                            } 
+                        } else {
+                            machinesArray[index].thumbnail = missingThumbnailImage;
                         }
                     });
         
@@ -233,7 +237,7 @@ fs.readFile(metaSource, function (err, data) {
                             <developer>` + thisMetaGameDataDev + `</developer>
                             <image>~/.emulationstation/` + machineImagesPath + machine.filename + `.png</image>
                             <marquee>~/.emulationstation/` + machineMarqueesPath + machine.filename + `.png</marquee>
-                            <thumbnail>~/.emulationstation/` + machineThumbnailsPath + machine.filename + `.png</thumbnail>
+                            <thumbnail>~/.emulationstation/` + machine.thumbnail + `</thumbnail>
                             <manual>~/.emulationstation/` + machine.manual + `</manual>
                             <releasedate>` + machine.year + `0101</releasedate>
                             <genre>` + machine.genre + `</genre>
@@ -269,7 +273,7 @@ fs.readFile(metaSource, function (err, data) {
                     //specifiy data to create collections for here
                     let wantedLists = [
                         { name: 'atari',        publisher: 'Atari',         notsource: ['jaguar'] },
-                        { name: 'acclaim',      publisher: 'Acclaim' },
+                        // { name: 'acclaim',      publisher: 'Acclaim' },
                         { name: 'atlus',        publisher: 'Atlus' },
                         { name: 'ballymidway',  publisher: 'Bally Midway',  notsource: ['astrocde'] },
                         { name: 'ballysente',   publisher: 'Bally/Sente' },
@@ -293,9 +297,9 @@ fs.readFile(metaSource, function (err, data) {
                         { name: 'konami',       publisher: 'Konami',        notsource: ['konamigx','konamigq','konamigv','konamigs','djmain','firebeat'] },
                         { name: 'konami-g',     publisher: 'Konami',        source: ['konamigx','konamigq','konamigv','konamigs'] },
                         { name: 'midway',       publisher: 'Midway',        notpublisher: 'Bally Midway',       notsource: ['astrocde'] },
-                        { name: 'namco',        publisher: 'Namco',         notsource: ['namcos1', 'namcos11', 'namcos12', 'namcos2', 'namcos21', 'namcos21_c67', 'namcos22']},
+                        { name: 'namco',        publisher: 'Namco',         notsource: ['namcos1', 'namcos11', 'namcos12', 'namcos2', 'namcos21', 'namcos21_c67', 'namcos22', 'namcona1', 'namconb1', 'namcofl','cave','kungfur']},
                         { name: 'namco-stype',  publisher: 'Namco',         source: ['namcos1', 'namcos2', 'namcos11', 'namcos12', 'namcos21', 'namcos21_c67', 'namcos22']},
-                        // { name: 'namco-na',     publisher: 'Namco',         source: ['namcona1','namconb1'] },
+                        { name: 'namco-na',     publisher: 'Namco',         source: ['namcona1','namconb1'] },
                         // { name: 'namco-s12',    publisher: 'Namco',         source: ['namcos1', 'namcos2'] },
                         // { name: 'namco-s1112',  publisher: 'Namco',         source: ['namcos11', 'namcos12'] },
                         // { name: 'namco-s2122',  publisher: 'Namco',         source: ['namcos21', 'namcos21_c67', 'namcos22'] },
@@ -332,7 +336,7 @@ fs.readFile(metaSource, function (err, data) {
                         { name: 'neogeo',       source: ['neogeo'] },
                         { name: 'nmk',          source: ['nmk16'] },
                         { name: 'pgm',          source: ['pgm'] },
-                        { name: 'atari 3dfx',   source: ['seattle']}
+                        { name: 'vegas3dfx',    source: ['seattle']}
                     ];
             
                     console.log('Generating collection lists...');
