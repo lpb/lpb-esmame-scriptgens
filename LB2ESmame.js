@@ -5,8 +5,8 @@ const xmlSource = 'I:/Launchbox/Metadata/Mame.xml';
 const metaSource = 'I:/Launchbox/Metadata/Metadata.xml';
 const dataSourceDir = 'I:/MAMEdata/';
 const destRootDir = 'I:/emulationStation-Arcade/.emulationstation/';
-const UsagePath = 'I:/emulationStation-Arcade/.emulationstation/'; 
-const UsageRomPAth = 'I:/MAMEdata/roms/';
+const UsagePath = './mamedata/roms/'; //for collection lists
+// const UsageRomPAth = 'I:/MAMEdata/roms/';
 
 const romsSrc = dataSourceDir + 'roms/';
 const snapsSrc = dataSourceDir + 'Extras/snap/snap/';
@@ -14,25 +14,26 @@ const logosSrc = dataSourceDir + 'Extras/marquees/marquees/';
 const titlesSrc = dataSourceDir + 'Extras/flyers/flyers/';
 const manualsSrc = dataSourceDir + 'Extras/manuals/manuals/';
 
-const gameListDir = destRootDir + '../.emulationstation/gamelists/mame/';
+const gameListDir = destRootDir + 'gamelists/mame/';
 const collectionDir = destRootDir + 'collections/';
 
-const mediaBasePath = '../.emulationstation/';
-const machineRomsPath = 'roms/';
+const mediaBasePath = '~/.emulationstation/';
+const machineRomsPath = './';
 const machineImagesPath = 'media/snaps/';
 const machineMarqueesPath = 'media/logos/';
 const machineManualsPath = 'media/manuals/';
 const machineThumbnailsPath = 'media/images/';
 
-const destRomsPath = mediaBasePath + machineRomsPath;
-const destImagesPath = mediaBasePath + machineImagesPath;
-const destMarqueesPath = mediaBasePath + machineMarqueesPath;
-const destThumbnailsPath = mediaBasePath + machineThumbnailsPath;
-const destManualsPath = mediaBasePath + machineManualsPath;
+const destBasePath = destRootDir;
+const destRomsPath = destBasePath + machineRomsPath;
+const destImagesPath = destBasePath + machineImagesPath;
+const destMarqueesPath = destBasePath + machineMarqueesPath;
+const destThumbnailsPath = destBasePath + machineThumbnailsPath;
+const destManualsPath = destBasePath + machineManualsPath;
 
-const missingThumbnailImage = 'no_image.png';
+const missingThumbnailImage = mediaBasePath + 'media/no-image.png';
 
-const doMedia = true; //disable media transfer
+const doMedia = false; //disable media transfer
 const doRoms = false; //disable rom relocation
 const overWriteMedia = false; //overwrite existing media files
 const doLists = true; //disable collection list generation
@@ -94,7 +95,6 @@ fs.readFile(metaSource, function (err, data) {
                         (thisMachine.Genre.indexOf('Shougi') != -1) ||
                         thisMachine.Source == 'vsnes.cpp' ||
                         thisMachine.Source == 'megaplay.cpp' ||
-                        thisMachine.Source == 'aleck64.cpp' ||
                         thisMachine.Source == 'tumbleb.cpp'
                     ) {
                         //don't include anything that matches this above chunk of conditionals...
@@ -102,27 +102,31 @@ fs.readFile(metaSource, function (err, data) {
                         let newLanguage = 'en'; //some defaults just in case
                         let newPlayers = '1';
 
-                        switch (thisMachine.Language) {
-                            case 'English':
-                                newLanguage = 'en';
-                                break;
-                            case 'Japanese':
-                                newLanguage = 'jp';
-                                break;
+                        if(thisMachine.Language) {
+                            switch (thisMachine.Language) {
+                                case 'English':
+                                    newLanguage = 'en';
+                                    break;
+                                case 'Japanese':
+                                    newLanguage = 'jp';
+                                    break;
+                            }
                         }
-                        switch (true) {
-                            case (thisMachine.PlayMode.indexOf('1P') != -1):
-                                newPlayers = '1';
-                                break;
-                            case (thisMachine.PlayMode.indexOf('2P') != -1):
-                                newPlayers = '2';
-                                break;
+
+                        if(thisMachine.PlayMode) {
+                            switch (true) {
+                                case (thisMachine.PlayMode.indexOf('1P') != -1):
+                                    newPlayers = '1';
+                                    break;
+                                case (thisMachine.PlayMode.indexOf('2P') != -1):
+                                    newPlayers = '2';
+                                    break;
+                            }
                         }
 
                         let newEntry = {
                             filename: thisMachine.FileName,
-                            name: thisMachine.Name,
-                            publisher: thisMachine.Publisher,
+                            name: thisMachine.Name,      publisher: thisMachine.Publisher,
                             year: thisMachine.Year,
                             genre: thisMachine.Genre,
                             language: newLanguage,
@@ -135,16 +139,19 @@ fs.readFile(metaSource, function (err, data) {
                 };
 
                 function doFileTransfer(process, type, source, destination, finalPath) {
-                    if(process) {
                         if (fs.existsSync(source)) {
-                            console.log('from: ' + source);
-                            if (!fs.existsSync(destination) || overWriteMedia) {
-                                console.log('to: ' + destination);
-                                fs.copyFile(source, destination, function (err) {
-                                    if (err) throw err
-                                    console.log('Successfully transferred ' + type + ': ' + destination);
+                            //console.log('from: ' + source);
+                            if(process) {
+                                if (!fs.existsSync(destination) || overWriteMedia) {
+                                    //console.log('to: ' + destination);
+                                    fs.copyFile(source, destination, function (err) {
+                                        if (err) throw err
+                                        //console.log('Successfully transferred ' + type + ': ' + destination);
+                                        return finalPath;
+                                    })
+                                } else {
                                     return finalPath;
-                                })
+                                }
                             } else {
                                 return finalPath;
                             }
@@ -155,9 +162,7 @@ fs.readFile(metaSource, function (err, data) {
                                 return missingThumbnailImage;
                             }
                         }
-                    } else {
-                        return finalPath;
-                    }
+
                 }
 
                 //do image finding and relocating for snaps
@@ -166,7 +171,7 @@ fs.readFile(metaSource, function (err, data) {
                     let type = 'image';
                     let sourcePath = snapsSrc + machine.filename + '.png';
                     let destFile = destImagesPath + machine.filename + '.png';
-                    let finalPath = UsagePath + machineImagesPath + machine.filename + '.png';
+                    let finalPath = mediaBasePath + machineImagesPath + machine.filename + '.png';
                     machinesArray[index][type] = doFileTransfer(doMedia, type, sourcePath, destFile, finalPath);
                 });
 
@@ -177,7 +182,7 @@ fs.readFile(metaSource, function (err, data) {
                     machinesArray[index].thumbnail = false;
                     let sourcePath = titlesSrc + machine.filename + '.png';
                     let destFile = destThumbnailsPath + machine.filename + '.png';
-                    let finalPath = UsagePath + machineThumbnailsPath + machine.filename + '.png';
+                    let finalPath = mediaBasePath + machineThumbnailsPath + machine.filename + '.png';
                     machinesArray[index][type] = doFileTransfer(doMedia, type, sourcePath, destFile, finalPath);
                 });
 
@@ -187,7 +192,7 @@ fs.readFile(metaSource, function (err, data) {
                     let type = 'marquee';
                     let sourcePath = logosSrc + machine.filename + '.png';
                     let destFile = destMarqueesPath + machine.filename + '.png';
-                    let finalPath = UsagePath + machineMarqueesPath + machine.filename + '.png';
+                    let finalPath = mediaBasePath + machineMarqueesPath + machine.filename + '.png';
                     machinesArray[index][type] = doFileTransfer(doMedia, type, sourcePath, destFile, finalPath);
                 });
 
@@ -198,7 +203,7 @@ fs.readFile(metaSource, function (err, data) {
                     machinesArray[index].manual = false;
                     let sourcePath = manualsSrc + machine.filename + '.pdf';
                     let destFile = destManualsPath + machine.filename + '.pdf';
-                    let finalPath = UsagePath + machineManualsPath + machine.filename + '.pdf';
+                    let finalPath = mediaBasePath + machineManualsPath + machine.filename + '.pdf';
                     machinesArray[index][type] = doFileTransfer(doMedia, type, sourcePath, destFile, finalPath);
                 });
 
@@ -208,9 +213,9 @@ fs.readFile(metaSource, function (err, data) {
                     let type = 'path';
                     let sourcePath = romsSrc + machine.filename + '.zip';
                     let destFile = destRomsPath + machine.filename + '.zip';
-                    let finalPath = UsagePath + machineRomsPath + machine.filename + '.zip';
-                    // machinesArray[index][type] = doFileTransfer(doRoms, type, sourcePath, destFile, finalPath);
-                    machinesArray[index][type] = UsageRomPAth + machine.filename + '.zip';
+                    let finalPath = machineRomsPath + machine.filename + '.zip';
+                    machinesArray[index][type] = doFileTransfer(doRoms, type, sourcePath, destFile, finalPath);
+                    //machinesArray[index][type] = UsageRomPAth + machine.filename + '.zip';
                 });
 
 
@@ -281,266 +286,79 @@ fs.readFile(metaSource, function (err, data) {
 
                 if (doLists) {
                     //specifiy data to create collections for here
-                    let wantedLists = [{
-                            name: 'atari',
-                            publisher: 'Atari',
-                            notsource: ['jaguar']
-                        },
-                        // { name: 'acclaim',      publisher: 'Acclaim' },
-                        {
-                            name: 'atlus',
-                            publisher: 'Atlus'
-                        },
-                        {
-                            name: 'ballymidway',
-                            publisher: 'Bally Midway',
-                            notsource: ['astrocde']
-                        },
-                        {
-                            name: 'ballysente',
-                            publisher: 'Bally/Sente'
-                        },
-                        {
-                            name: 'capcom',
-                            publisher: 'Capcom',
-                            notsource: ['cps1', 'cps2', 'cps3', 'zn']
-                        },
-                        {
-                            name: 'capcom-cps1',
-                            publisher: 'Capcom',
-                            source: ['cps1']
-                        },
-                        {
-                            name: 'capcom-cps2',
-                            publisher: 'Capcom',
-                            source: ['cps2']
-                        },
-                        {
-                            name: 'capcom-cps3',
-                            publisher: 'Capcom',
-                            source: ['cps3']
-                        },
-                        {
-                            name: 'capcom-zn',
-                            publisher: 'Capcom',
-                            source: ['zn']
-                        },
-                        {
-                            name: 'century',
-                            publisher: 'Century Electronics'
-                        },
-                        {
-                            name: 'cinematronics',
-                            publisher: 'Cinematronics'
-                        },
-                        {
-                            name: 'comad',
-                            publisher: 'Comad',
-                            notsource: ['nmk16']
-                        },
-                        {
-                            name: 'gaelco',
-                            publisher: 'Gaelco'
-                        },
-                        {
-                            name: 'gottlieb',
-                            publisher: 'Gottlieb'
-                        },
-                        {
-                            name: 'dataeast',
-                            publisher: 'Data East',
-                            notsource: ['decocass']
-                        },
-                        {
-                            name: 'dataeast-deco',
-                            publisher: 'Data East',
-                            source: ['decocass']
-                        },
-                        {
-                            name: 'exidy',
-                            publisher: 'Exidy'
-                        },
-                        {
-                            name: 'hudson',
-                            publisher: 'Hudson'
-                        },
-                        {
-                            name: 'irem',
-                            publisher: 'Irem'
-                        },
-                        {
-                            name: 'jaleco',
-                            publisher: 'Jaleco'
-                        },
-                        {
-                            name: 'kaneko',
-                            publisher: 'Kaneko'
-                        },
-                        {
-                            name: 'konami',
-                            publisher: 'Konami',
-                            notsource: ['konamigx', 'konamigq', 'konamigv', 'konamigs', 'djmain', 'firebeat']
-                        },
-                        {
-                            name: 'konami-g',
-                            publisher: 'Konami',
-                            source: ['konamigx', 'konamigq', 'konamigv', 'konamigs']
-                        },
-                        {
-                            name: 'midway',
-                            publisher: 'Midway',
-                            notpublisher: 'Bally Midway',
-                            notsource: ['astrocde']
-                        },
-                        {
-                            name: 'namco',
-                            publisher: 'Namco',
-                            notsource: ['namcos1', 'namcos11', 'namcos12', 'namcos2', 'namcos21', 'namcos21_c67', 'namcos22', 'namcona1', 'namconb1', 'namcofl', 'cave', 'kungfur']
-                        },
-                        {
-                            name: 'namco-stype',
-                            publisher: 'Namco',
-                            source: ['namcos1', 'namcos2', 'namcos11', 'namcos12', 'namcos21', 'namcos21_c67', 'namcos22']
-                        },
-                        {
-                            name: 'namco-na',
-                            publisher: 'Namco',
-                            source: ['namcona1', 'namconb1']
-                        },
-                        // { name: 'namco-s12',    publisher: 'Namco',         source: ['namcos1', 'namcos2'] },
-                        // { name: 'namco-s1112',  publisher: 'Namco',         source: ['namcos11', 'namcos12'] },
-                        // { name: 'namco-s2122',  publisher: 'Namco',         source: ['namcos21', 'namcos21_c67', 'namcos22'] },
-                        {
-                            name: 'nintendo',
-                            publisher: 'Nintendo'
-                        },
-                        {
-                            name: 'psikyo',
-                            publisher: 'Psikyo'
-                        },
-                        {
-                            name: 'sega',
-                            publisher: 'Sega',
-                            notsource: ['megaplay', 'meritm', 'model1', 'model2', 'model3', 'segaorun', 'segaxbd', 'segaybd', 'segas32', 'stv']
-                        },
-                        {
-                            name: 'sega-model1',
-                            publisher: 'Sega',
-                            source: ['model1']
-                        },
-                        {
-                            name: 'sega-model2',
-                            publisher: 'Sega',
-                            source: ['model2']
-                        },
-                        {
-                            name: 'sega-model3',
-                            publisher: 'Sega',
-                            source: ['model3']
-                        },
-                        {
-                            name: 'sega-sscaler',
-                            publisher: 'Sega',
-                            source: ['segaorun', 'segaxbd', 'segaybd', 'segas32']
-                        },
-                        {
-                            name: 'sega-stv',
-                            publisher: 'Sega',
-                            source: ['stv']
-                        },
-                        {
-                            name: 'seta',
-                            publisher: 'Seta'
-                        },
-                        {
-                            name: 'seibu',
-                            publisher: 'Seibu Kaihatsu'
-                        },
-                        {
-                            name: 'stern',
-                            publisher: 'Stern Electronics'
-                        },
-                        {
-                            name: 'snk',
-                            publisher: 'SNK',
-                            notsource: ['neogeo']
-                        },
-                        {
-                            name: 'snk-neogeo',
-                            publisher: 'SNK',
-                            source: ['neogeo']
-                        },
-                        {
-                            name: 'taito',
-                            publisher: 'Taito',
-                            notsource: ['taito_b', 'taito_f1', 'taito_f2', 'taito_f3', 'taitogn', 'naomi', 'taito_z', 'taito_l', 'taitojc', 'zn', 'undrfire', 'slapshot', 'ddenlovr', 'superchs', 'groundfx', 'neogeo', 'nmk16']
-                        },
-                        {
-                            name: 'taito-typex',
-                            publisher: 'Taito',
-                            source: ['taito_b', 'taito_f1', 'taito_f2', 'taito_f3', 'taito_z', 'taito_l', 'superchs', 'groundfx']
-                        },
+
+                    // let wantedLists = [
+                    //     {   name: 'naomi',      source: ['naomi']   },
+                    //     {   name: 'aleck64',    source: ['aleck64']   },
+                    //     {   name: 'seta',       source: ['seta']   },
+                    //     {   name: 'atomiswave', source: ['atomiswave']   },
+                    //     {   name: 'model1',     source: ['model1']   },
+                    //     {   name: 'model2',     source: ['model2']   },
+                    //     {   name: 'model3',     source: ['model3']   },
+                    //     {   name: 'stv',        source: ['stv']   },
+                    // ];
+
+                    let wantedLists = [ 
+                            {   name: 'atari',          publisher: 'Atari',         notsource: ['jaguar']   },
+                            {   name: 'atlus',          publisher: 'Atlus'  },
+                            {   name: 'ballymidway',    publisher: 'Bally Midway',  notsource: ['astrocde'] },
+                            {   name: 'ballysente',     publisher: 'Bally/Sente'    },
+                            {   name: 'capcom',         publisher: 'Capcom',        notsource: ['cps1', 'cps2', 'cps3', 'zn']   },
+                            {   name: 'capcom-cps1',    publisher: 'Capcom',        source: ['cps1']    },
+                            {   name: 'capcom-cps2',    publisher: 'Capcom',        source: ['cps2']    },
+                            {   name: 'capcom-cps3',    publisher: 'Capcom',        source: ['cps3']    },
+                            {   name: 'capcom-zn',      publisher: 'Capcom',        source: ['zn'] },
+                            {   name: 'century',        publisher: 'Century Electronics'  },
+                            {   name: 'cinematronics',  publisher: 'Cinematronics'  },
+                            {   name: 'comad',          publisher: 'Comad',         notsource: ['nmk16'] },
+                            {   name: 'gaelco',         publisher: 'Gaelco'  },
+                            {   name: 'gottlieb',       publisher: 'Gottlieb'  },
+                            {   name: 'dataeast',       publisher: 'Data East',     notsource: ['decocass'] },
+                            {   name: 'dataeast-deco',  publisher: 'Data East',     source: ['decocass'] },
+                            {   name: 'exidy',          publisher: 'Exidy'  },
+                            {   name: 'hudson',         publisher: 'Hudson'  },
+                            {   name: 'irem',           publisher: 'Irem'  },
+                            {   name: 'jaleco',         publisher: 'Jaleco'  },
+                            {   name: 'kaneko',         publisher: 'Kaneko'  },
+                            {   name: 'konami',         publisher: 'Konami',        notsource: ['konamigx', 'konamigq', 'konamigv', 'konamigs', 'djmain', 'firebeat'] },
+                            {   name: 'konami-g',       publisher: 'Konami',        source: ['konamigx', 'konamigq', 'konamigv', 'konamigs'] },
+                            {   name: 'midway',         publisher: 'Midway',        notpublisher: 'Bally Midway',       notsource: ['astrocde'] },
+                            {   name: 'namco',          publisher: 'Namco',         notsource: ['namcos1', 'namcos11', 'namcos12', 'namcos2', 'namcos21', 'namcos21_c67', 'namcos22', 'namcona1', 'namconb1', 'namcofl', 'cave', 'kungfur'] },
+                            {   name: 'namco-stype',    publisher: 'Namco',         source: ['namcos1', 'namcos2', 'namcos11', 'namcos12', 'namcos21', 'namcos21_c67', 'namcos22'] },
+                            {   name: 'namco-na',       publisher: 'Namco',         source: ['namcona1', 'namconb1'] },
+                            {   name: 'nintendo',       publisher: 'Nintendo'  },
+                            {   name: 'psikyo',         publisher: 'Psikyo'  },
+                            {   name: 'sega',           publisher: 'Sega',          notsource: ['megaplay', 'meritm', 'model1', 'model2', 'model3', 'segaorun', 'segaxbd', 'segaybd', 'segas32', 'stv'] },
+                            {   name: 'sega-model1',    publisher: 'Sega',          source: ['model1'] },
+                            {   name: 'sega-model2',    publisher: 'Sega',          source: ['model2'] },
+                            {   name: 'sega-model3',    publisher: 'Sega',          source: ['model3'] },
+                            {   name: 'sega-sscaler',   publisher: 'Sega',          source: ['segaorun', 'segaxbd', 'segaybd', 'segas32'] },
+                            {   name: 'sega-stv',       publisher: 'Sega',          source: ['stv'] },
+                            {   name: 'seta',           publisher: 'Seta'  },
+                            {   name: 'seibu',          publisher: 'Seibu Kaihatsu'  },
+                            {   name: 'stern',          publisher: 'Stern Electronics'  },
+                            {   name: 'snk',            publisher: 'SNK',           notsource: ['neogeo'] },
+                            {   name: 'snk-neogeo',     publisher: 'SNK',           source: ['neogeo'] },
+                            {   name: 'taito',          publisher: 'Taito',         notsource: ['taito_b', 'taito_f1', 'taito_f2', 'taito_f3', 'taitogn', 'naomi', 'taito_z', 'taito_l', 'taitojc', 'zn', 'undrfire', 'slapshot', 'ddenlovr', 'superchs', 'groundfx', 'neogeo', 'nmk16'] },
+                            {   name: 'taito-typex',    publisher: 'Taito',         ource: ['taito_b', 'taito_f1', 'taito_f2', 'taito_f3', 'taito_z', 'taito_l', 'superchs', 'groundfx'] },
                         // { name: 'taito-f',      publisher: 'Taito',         source: ['taito_f1','taito_f2','taito_f3'] },
                         // { name: 'taito-l',      publisher: 'Taito',         source: ['taito_l'] },
                         // { name: 'taito-z',      publisher: 'Taito',         source: ['taito_z'] },
                         // { name: 'taito-gnet',   publisher: 'Taito',         source: ['taitogn'] },
-                        {
-                            name: 'tecmo',
-                            publisher: 'Tecmo'
-                        },
-                        {
-                            name: 'technos',
-                            publisher: 'Technos'
-                        },
-                        {
-                            name: 'tehkan',
-                            publisher: 'Tehkan'
-                        },
-                        {
-                            name: 'toaplan',
-                            publisher: 'Toaplan'
-                        },
-                        {
-                            name: 'universal',
-                            publisher: 'Universal'
-                        },
-                        {
-                            name: 'videosystem',
-                            publisher: 'Video System Co.'
-                        },
-                        {
-                            name: 'williams',
-                            publisher: 'Williams'
-                        },
-                        {
-                            name: 'zaccaria',
-                            publisher: 'Zaccaria'
-                        },
-
-                        {
-                            name: 'astrocade',
-                            source: ['astrocde']
-                        },
-                        {
-                            name: 'naomi',
-                            source: ['naomi']
-                        },
-                        {
-                            name: 'neogeo',
-                            source: ['neogeo']
-                        },
-                        {
-                            name: 'nmk',
-                            source: ['nmk16']
-                        },
-                        {
-                            name: 'pgm',
-                            source: ['pgm']
-                        },
-                        {
-                            name: 'vegas3dfx',
-                            source: ['seattle']
-                        }
+                            {   name: 'tecmo',          publisher: 'Tecmo'  },
+                            {   name: 'technos',        publisher: 'Technos'  },
+                            {   name: 'tehkan',         publisher: 'Tehkan'  },
+                            {   name: 'toaplan',        publisher: 'Toaplan'  },
+                            {   name: 'universal',      publisher: 'Universal'  },
+                            {   name: 'videosystem',    publisher: 'Video System Co.'  },
+                            {   name: 'williams',       publisher: 'Williams'  },
+                            {   name: 'zaccaria',       publisher: 'Zaccaria'  },
+                            {   name: 'astrocade',      source: ['astrocde'] },
+                            {   name: 'naomi',          source: ['naomi'] },
+                            {   name: 'neogeo',         source: ['neogeo'] },
+                            {   name: 'nmk',            source: ['nmk16'] },
+                            {   name: 'pgm',            source: ['pgm'] },
+                            {   name: 'vegas3dfx',      source: ['seattle'] }
                     ];
 
                     console.log('Generating collection lists...');
@@ -581,7 +399,7 @@ fs.readFile(metaSource, function (err, data) {
 
                             if (pubmatch && srcmatch) {
                                 collectionCount++;
-                                collectionContent += machine.path + `\r\n`;
+                                collectionContent += UsagePath + machine.filename + `.zip\r\n`;
                             }
                         });
 
@@ -595,9 +413,9 @@ fs.readFile(metaSource, function (err, data) {
                         });
                     });
 
+                    console.log('All done!');                    
                 }
 
-                console.log('All done!');
             });
         });
 
