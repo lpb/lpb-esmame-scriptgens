@@ -7,7 +7,7 @@ const mameMetaSource = './data/Mame.xml';
 
 const UsagePath = './data/mame/roms/';
 const destRootDir = './output/';
-const gameListDir = destRootDir + 'gamelist/';
+const gameListDir = destRootDir + 'gamelists/mame/';
 const collectionDir = destRootDir + 'collections/';
 
 const dataSourceDir = 'I:/MAMEdata/';
@@ -36,7 +36,7 @@ let machinesArray = [];
 let metaData = [];
 let mameMetaData = [];
 
-const doMedia = true; //disable media transfer
+const doMedia = false; //disable media transfer
 const doRoms = false; //disable rom relocation
 const overWriteMedia = false; //overwrite existing media files
 const doLists = true; //disable collection list generation
@@ -208,6 +208,7 @@ fs.readFile(xmlSource, function (err, data) {
                 let image_sourcePath = imageSrc + machine.filename + '.png';
                 let image_destFile = destImagesPath + machine.filename + '.png';
                 machine.image = doFileTransfer(doMedia, machine.filename, image_sourcePath, image_destFile, image_finalPath);
+                machine.image = image_finalPath;
             } else {
                 machine.image = image_finalPath;
             }
@@ -227,7 +228,7 @@ fs.readFile(xmlSource, function (err, data) {
             if (doMedia) {
                 let logo_sourcePath = marqueeSrc + machine.filename + '.png';
                 let logo_destFile = destMarqueesPath + machine.filename + '.png';
-                machinesArray[index]['marquee'] = doFileTransfer(doMedia, machine.filename, logo_sourcePath, logo_destFile, logo_finalPath);
+                machine.marquee = doFileTransfer(doMedia, machine.filename, logo_sourcePath, logo_destFile, logo_finalPath);
             } else {
                 machine.marquee = logo_finalPath;
             }
