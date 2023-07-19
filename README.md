@@ -11,13 +11,13 @@ These are scrappy and quickly put together, if anyone is interested in running t
 Most paths and filenames should be defined in the top of each js file.
 
 ## Scripts
+xml2es.js - combines & processes various XML files into a useful (to me at least) gamelist.xml for use with EmulationStation/Batocera/Retrobat.
+
+-currently defunct-
 M2ESgamelist.js - generates a central gamelist.xml that is primarily arcade machines (adjustable by changing sourcefile/manufacturer variables).
 M2ESsoftwareLists.js - generates a gameslist.xml for each software list machine.
 M2ESsystems.js - generates a es_systems.cfg for each software list machine.
-LB2ESmame.js - if you have Launchbox, can use that to generate xml for MAME as an alternative (different structures).
-sortScrapedImages.js - shifts image files around various directories.
-collection2library.js - translate ES collections into gamelist.xml
-collection2systems.js - generates es_systems.cfg to work with collection2library.js gamelists.
+
 
 ## License
 Shield: [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
